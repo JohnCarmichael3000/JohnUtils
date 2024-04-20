@@ -41,10 +41,23 @@ $groupedModules = $allModules | Group-Object -Property Name, version, ModuleBase
 
 #https://www.powershellgallery.com/packages?q=PowerShellGet
 Get-Module -ListAvailable -Name PowerShellGet | Select-Object -Property name, version, ModuleBase
+Import-Module -Name PowerShellGet -Version 2.2.5
 
 #https://www.powershellgallery.com/packages?q=PackageManagement
 Get-Module -ListAvailable -Name PackageManagement | Select-Object -Property name, version, ModuleBase
+Import-Module -Name PackageManagement -Version 1.4.8.1
 
+# ************************************************************************************************************************
+PowerShell Module Loading Order:
+
+1. Explicitly Specified Version: If you specify a particular version in your Import-Module command using the -Version parameter, 
+PowerShell will load that specific version. Eg: Import-Module -Name PackageManagement -Version 1.4.8.1
+2. Most Recent Version: By default, if no version is explicitly specified, PowerShell loads the most recent version of the module that it 
+can find in the directories listed in the $env:PSModulePath environment variable.
+3. Order of Paths in $env:PSModulePath: The paths listed in $env:PSModulePath are searched in the order they appear. PowerShell checks 
+these directories sequentially for the module and loads the most recent version found in the first directory where the module is located. 
+This means that if a newer version is in a directory later in the search order,  it won't be loaded unless the earlier directories 
+don't contain that module.
 
 # ************************************************************************************************************************
 # Updating Modules:
@@ -67,5 +80,3 @@ $filteredModulePaths = foreach ($group in $groupedModules) {
     }
 }
 $filteredModulePaths | Sort-Object -Unique | ForEach-Object { $_ }
-
-
