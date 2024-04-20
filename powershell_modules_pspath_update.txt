@@ -1,0 +1,71 @@
+
+# ************************************************************************************************************************
+# PowerShell Module Path and System Path
+In PowerShell, the environment variable used to find modules is PSModulePath.
+
+$env:PSModulePath
+$env:PSModulePath -split ';' | ForEach-Object { $_ }
+
+also there is the computer path:
+$env:Path
+$env:Path -split ';' | ForEach-Object { $_ }
+
+set PowerShell path environment variable via gia:
+open command line as administrator
+start > run >
+SystemPropertiesAdvanced
+
+for current powershell session:
+$env:Path = "C:\Your\Path\Here;$env:Path"
+
+$NewPath = "C:\Your\Path\Here;$([Environment]::GetEnvironmentVariable('Path', 'User'))"
+[Environment]::SetEnvironmentVariable('Path', $NewPath, 'User')
+
+$NewPath = "C:\Your\Path\Here;$([Environment]::GetEnvironmentVariable('Path', 'Machine'))"
+[Environment]::SetEnvironmentVariable('Path', $NewPath, 'Machine')
+
+
+# ************************************************************************************************************************
+# Get Modules:
+
+Get-Module -ListAvailable 
+
+Get-Module -ListAvailable | Select-Object -Property name, version, ModuleBase
+Get-Module -ListAvailable -Name 'az*'  | Select-Object -Property name, version, ModuleBase
+
+# Get all available modules starting with 'az'
+$allModules = Get-Module -ListAvailable -Name 'az*'
+
+# Group modules by their name
+$groupedModules = $allModules | Group-Object -Property Name, version, ModuleBase
+
+#https://www.powershellgallery.com/packages?q=PowerShellGet
+Get-Module -ListAvailable -Name PowerShellGet | Select-Object -Property name, version, ModuleBase
+
+#https://www.powershellgallery.com/packages?q=PackageManagement
+Get-Module -ListAvailable -Name PackageManagement | Select-Object -Property name, version, ModuleBase
+
+
+# ************************************************************************************************************************
+# Updating Modules:
+Get-Module -ListAvailable | Select-Object -Unique Name | ForEach-Object { Update-Module -Name $_.Name -Force }
+
+
+# ************************************************************************************************************************
+# Get old versions of modules: Iterate over each group and process
+$filteredModulePaths = foreach ($group in $groupedModules) {
+    # Check if the group has more than one module
+    if ($group.Count -gt 1) {
+        # Sort the modules by version in descending order
+        $sortedModules = $group.Group | Sort-Object -Property Version -Descending
+
+        # Skip the first module (most recent version) and get the directory paths of the rest
+        foreach ($module in $sortedModules | Select-Object -Skip 1) {
+            # Extract the directory part of the module path
+            Split-Path $module.Path
+        }
+    }
+}
+$filteredModulePaths | Sort-Object -Unique | ForEach-Object { $_ }
+
+
